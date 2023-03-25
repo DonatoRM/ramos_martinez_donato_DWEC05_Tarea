@@ -91,11 +91,12 @@ const validarNIF = (nif) => {
  */
 const validarEmail = (email) => {
     let result = { resultado: true, error: undefined };
-    const regex = /^\S+@\S+\.\S+$/;
+    const regex = /^\S+@\S+\.\S{2,}$/;
     /*
     \S+ --> Uno o más caracteres en los que no esté un espacio en blanco
     @ --> El caracter arroba
     \. --> El caracter punto.
+    \S{2,} -->Dos a omás caracteres en los que no esté un espacio en blanco
     */
     if (regex.test(email)) {
         result.resultado = true;
@@ -106,13 +107,108 @@ const validarEmail = (email) => {
     }
     return result;
 };
-
-// Handler invocado desde el Listener Principal
+/**
+ * Función que valida una Fecha
+ * @param {string} fecha Fecha a validar
+ * @returns Objeto con el atributo resultado que indica si son válidos o no, y el atributo error que muestra el error cometido
+ */
+const validarFecha = (fecha) => {
+    let result = { resultado: true, error: undefined };
+    const regex = /^(\d{2}\/\d{2}\/\d{4})$|^(\d{2}-\d{2}-\d{4})$/;
+    /*
+    ^ indica que es desde el comienzo
+    $ indica que es hasta el final
+    ()|() indica que se puede utilizar la expresión regular que está en ambos paréntesis
+    \d{2} indica 2 dígitos obligatorios
+    \d{4} indica 4 dígitos obligatorios
+    \/ es el caracter / que está escapado
+    - indica el caracter guión 
+    */
+    if (regex.test(fecha)) {
+        result.resultado = true;
+        result.error = undefined;
+    } else {
+        result.resultado = false;
+        result.error = "El formato de fecha es incorrecto";
+    }
+    return result;
+};
+/**
+ * Función que valida un teléfono
+ * @param {string} telefono Teléfono a validar
+ * @returns Objeto con el atributo resultado que indica si son válidos o no, y el atributo error que muestra el error cometido
+ */
+const validarTelefono = (telefono) => {
+    let result = { resultado: true, error: undefined };
+    const regex = /^\d{9}$/;
+    /*
+    ^ indica que es desde el comienzo
+    $ indica que es hasta el final
+    \d{9} indica que son 9 valores numéricos
+    */
+    if (regex.test(telefono)) {
+        result.resultado = true;
+        result.error = undefined;
+    } else {
+        result.resultado = false;
+        result.error = "El formato del teléfono es incorrecto";
+    }
+    return result;
+};
+/**
+ * Función que valida una hora
+ * @param {string} hora Hora a validar
+ * @returns Objeto con el atributo resultado que indica si son válidos o no, y el atributo error que muestra el error cometido
+ */
+const validarHora = (hora) => {
+    let result = { resultado: true, error: undefined };
+    const regex = /^\d{2}:\d{2}$/;
+    /*
+    ^ indica que es desde el comienzo
+    $ indica que es hasta el final
+    \d{2} indica que son 2 valores numéricos
+    : indica que lleva el caracter dos puntos
+    */
+    if (regex.test(hora)) {
+        result.resultado = true;
+        result.error = undefined;
+    } else {
+        result.resultado = false;
+        result.error = "El formato de la hora es incorrecto";
+    }
+    return result;
+};
+/**
+ * Función que valida la selección de una Provincia
+ * @param {integer} indice Índice a validar
+ * @returns Objeto con el atributo resultado que indica si son válidos o no, y el atributo error que muestra el error cometido
+ */
+const validarProvincia = (indice) => {
+    let result = { resultado: true, error: undefined };
+    if (indice != 0) {
+        result.resultado = true;
+        result.error = undefined;
+    } else {
+        result.resultado = false;
+        result.error = "No ha sido selecciona la Provincia";
+    }
+    return result;
+};
+// Se crea una cookie si no existe
+let datosAlmacenados = document.cookie;
+if (datosAlmacenados === "") {
+    document.cookie = "intentos=0";
+}
+/**
+ * Handler invocado desde el Listener Principal
+ */
 const handlerPrincipal = () => {
     const errores = document.getElementById("errores");
     const intentos = document.getElementById("intentos");
     // Referencia a los objetos Input con el atributo Text
     const elementosFormulario = document.querySelectorAll("form [type=text]");
+    const elementoProvincia = document.getElementById("provincia");
+    const botonEnviar = document.getElementById("enviar");
     const handlerElementosFormulario = (event) => {
         let contenido;
         let error;
@@ -154,6 +250,27 @@ const handlerPrincipal = () => {
                     error = "<p>" + validarEmail(event.target.value).error + "</p>";
                 }
                 break;
+            case fecha:
+                if (validarFecha(event.target.value).resultado) {
+                    contenido = event.target.value.trim();
+                } else {
+                    error = "<p>" + validarFecha(event.target.value).error + "</p>";
+                }
+                break;
+            case telefono:
+                if (validarTelefono(event.target.value).resultado) {
+                    contenido = event.target.value.trim();
+                } else {
+                    error = "<p>" + validarTelefono(event.target.value).error + "</p>";
+                }
+                break;
+            case hora:
+                if (validarHora(event.target.value).resultado) {
+                    contenido = event.target.value.trim();
+                } else {
+                    error = "<p>" + validarHora(event.target.value).error + "</p>";
+                }
+                break;
         }
         if (error == undefined) {
             event.target.value = contenido;
@@ -163,8 +280,58 @@ const handlerPrincipal = () => {
             event.target.focus();
         }
     };
+    // Creación de los Listeners para cada uno de los elementos del formulario que son de tipo texto
     elementosFormulario.forEach((nodo) => {
         nodo.addEventListener("blur", handlerElementosFormulario);
     });
+    /**
+     * Handler invocado desde el Listener elementoProvincia
+     * @param {event} event Representa al objeto event proveniente del Select de Provincias
+     */
+    const handlerElementoProvincia = (event) => {
+        if (validarProvincia(event.target.selectedIndex).resultado) {
+            errores.innerHTML = "";
+        } else {
+            errores.innerHTML = "<p>" + validarProvincia(event.target.value).error + "</p>";
+            event.target.focus();
+        }
+    };
+    // Creación del Listener para controlar el evento Perder el Foco desde el elemento Select de Provincias
+    elementoProvincia.addEventListener("blur", handlerElementoProvincia);
+    /**
+     * Handler invocado por el evento Click realizado por el botón se Submit
+     */
+    const handlerBotonEnviar = () => {
+        event.preventDefault(); // Se paralizan el resto de eventos generados por defecto desde el navegador
+        let completo = true; // Variable con la que se chequea que han sido rellenados todos los campos correctamente
+        let valor; // Valor que posee actualmente la cookie intentos
+        valor = parseInt(document.cookie.split("=")[1]);
+        valor++;
+        document.cookie = "intentos=" + valor; // Se incrementa el valor de la Cookie
+        // Revisamos que todos los elementos del Formulario han sido rellenados con los valores esperados
+        elementosFormulario.forEach((elemento) => {
+            if (elemento.value == "") {
+                completo = false;
+            }
+        });
+        if (elementoProvincia.selectedIndex == 0) {
+            completo = false;
+        }
+        if (completo) {
+            intentos.innerHTML = ""; // Se borra el contenido de los intentos de la pantalla
+            let enviar = confirm("¿Desea enviar los datos al servidor?"); // Preguntamos si deseamos continuar
+            if (enviar) {
+                document.formulario.submit(); // Se decimos que sí se realizad el submit del formulario
+            } else {
+                // Si decimos que No se indica el número de intentos por pantalla
+                intentos.innerHTML = `Intento de envíos del formulario: ${valor}`;
+            }
+        } else {
+            // Si el formulario está incompleto, se indica por pantalla el número de intentos
+            intentos.innerHTML = `Intento de envíos del formulario: ${valor}`;
+        }
+    };
+    botonEnviar.addEventListener("click", handlerBotonEnviar);
 };
-document.addEventListener("DOMContentLoaded", handlerPrincipal); // Listener que controla el evento finalización de carga del DOM
+// Listener que controla el evento finalización de carga del DOM
+document.addEventListener("DOMContentLoaded", handlerPrincipal);
